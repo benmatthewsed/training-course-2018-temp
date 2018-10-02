@@ -35,13 +35,25 @@ library(margins)
 library(knitr)
 library(broom)
 
-# load the data ----------------------------------------------------------------
+# 1. load the data ----------------------------------------------------------------
 load("M:/Working with Admin Data Course/synthetic-data/FALSE_DATA_2017_003-census-education.RData")
 
-# selecting variables for analysis ---------------------------------------------
+# 2. selecting variables for analysis ---------------------------------------------
 
 # by now you should have a good idea which models you want to include in your
 # analysis. Refresh yourself with your descriptive work from yesterday.
+
+# When working ensure you clearly comment this so that other groups can follow 
+# what you are doing and why.
+
+
+# 3. Group discussion ---------------------------------------------------------------------
+
+# In small groups discuss which variables to include in the regression and 
+# justify your choices
+
+
+# 4. produce descriptive tables -------------------------------------------
 
 # for a paper you normally need a descriptive 'Table 1'which shows how the variables
 # included in your model relate to your outcome variable. We can use kable
@@ -92,17 +104,17 @@ linked_df %>%
 # document by default). Then press Ctrl + Shift + K to knit the .doc. This will
 # be saved into your working directory
 
-# modelling --------------------------------------------------------------------
+# 5. modelling --------------------------------------------------------------------
 
 # statistical modelling in R is a vast topic in its own right, and we're only
 # going to scratch the surface this afternoon.
-# 
 
 
 # we can fit a logit model with the glm() function
 # note that this function has a different structure to the tidyverse
 # fucntions we've been working with, with the formula coming first
 # and the data second
+
 # fit a logit model with neet as the response and sex, crsh, ademh, newten and
 # duration sum as IVs. Remember cases with NAs get dropped - do we need to recode
 # any variables? 
@@ -116,7 +128,6 @@ logit_model <- glm(neet ~ sex0 + crsh0 + ademh0 + newten + sum_duration, data = 
 # the classic way of looking at the model results is with summary()
 summary(logit_model)
 
-plot(logit_model)
 
 # have a think about what the model is showing here - what's the reference category
 # of the neet variable?
@@ -138,6 +149,9 @@ plot(logit_model)
 # You can read more at https://github.com/tidyverse/modelr
 
 
+
+# 6. examine regression output --------------------------------------------
+
 # tidy presents coefficient summary for variables in the model
 tidy(logit_model)
 
@@ -146,12 +160,24 @@ augment(logit_model)
 
 # this is helpful for plotting residuals etc.
 
-
 # glance provides a single row of summary statistics
 glance(logit_model)
 
+# what variables are associated with being NEET
 
-# comparing nested models ------------------------------------------------------
+
+# 7. Check your output for potential disclosure issues.  ------------------
+
+# 8. Missing data ---------------------------------------------------------
+
+# R defaults to a complete case analysis. How many people are included in 
+# the model? Have you included everyone who should be included? What are 
+# the levels of missing data for the included variables? Think about how 
+# you dealt with missing data in the Tuesday session. Are you losing a 
+# lot of people by including certain variables? Might multiple imputation 
+# be useful here?
+
+# comparing nested models 
 # we can see if sex0 is an important variable to include in the model by
 # comparing the model above to a model with sex removed
 # Two things to note - 1. we have to filter out cases that have missing for sex0
@@ -173,7 +199,17 @@ anova_res <- anova(logit_model, logit_no_sex, test = "LRT")
 # and if we wanted we can convert this result into a dataframe using broom::tidy
 tidy(anova_res)
 
-# ADVANCED - margins ()---------------------------------------------------------
+
+# 10. Interpret results ---------------------------------------------------
+
+# Interpret the result and briefly write up the findings discussing any 
+# issues with the output/variables you have included. For example are there 
+# any potential confounders that should be included but aren’t? Are there 
+# high levels of missing data? Are there any potential biases in your 
+# results?
+
+
+# 11. ADVANCED - margins ()---------------------------------------------------------
 
 # calculating marginal effects is less advanced in R than in Stata.
 # However, the margins() command, loaded with library(margins) allows 
@@ -191,5 +227,15 @@ results_df <- margins(logit_model)
 plot(results_df)
 
 
+# Interpretation ----------------------------------------------------------
+
+# Are there other analysis methods you could use? For example would 
+# a matched analysis work here? What variables would you match on?
+
+# Compare syntax with other groups. How well commented and clear 
+# is the do file? 
+
+# Swap outputs with another group and do statistical disclosure 
+# checking
 
 
