@@ -41,7 +41,7 @@ library(lubridate)
 
 # 1. load the data ----------------------------------------------------------------
 # read in the exclusions dataset you made on Tuesday again 
-load("")
+load("synthetic-data/FALSE_DATA_2017_003-exclusions-day_2.RData")
 
 
 # 2. Check year of exclusion from start date -----------------------------------
