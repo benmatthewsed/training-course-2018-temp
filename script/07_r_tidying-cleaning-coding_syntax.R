@@ -39,10 +39,10 @@
 # we're going to use the tidyverse package, so we need to load this
 library(tidyverse)
 
-# load the data ----------------------------------------------------------------
+# 1. & 2. load the data ----------------------------------------------------------------
 # start with the school census and read this in to an object called census
 
-census <- read_csv("M:/Working with Admin Data Course/synthetic-data/false_data_2017_003_census.csv")
+census <- read_csv("synthetic-data/false_data_2017_003_census.csv")
 
 # summarising the dataset ------------------------------------------------------
 
@@ -54,24 +54,16 @@ glimpse(census)
 # summary takes a more statistical approach
 summary(census)
 
-# hmmm, our dataset has imported all the variables as characters
-# we might want these as factors (it's easier to see what values they take this way)
+
+# ADVANCED ----------------------------------------------------------------
+
+# Our dataset has imported all the variables as characters
+# we might want these as factors (it's easier to see what values 
+# they take this way using summarise()).
 # to convert all character vectors to factors we can use a conditional mutate -
 # mutate_if. If a vector meets the condition is.character (first argument)
 # it's converted to a be as.factor (the second argument).
-# the map() function lets us apply a function to all the variables in the dataset
-# if we pass levels() to map() [map(levels)] R will print out the levels for each
-# variable in the dataset, printing NULL for numeric variables
-# this is an example of iteration as we discussed in the workflow session
-
-census %>% 
-  mutate_if(is.character, as.factor) %>% 
-  map(levels)
-
-# summarize will give us a more informative output now
-# (note that we need to convert to factor again now because we didn't assign this
-# anywhere). If we copy/paste this again though we'll need to assign this to keep
-# our code DRY
+# We can then pass the file to summary() as before
 
 census %>% 
   mutate_if(is.character, as.factor) %>% 
@@ -83,7 +75,7 @@ census %>%
 # 3. relabel the factor levels for ecop1
 # 4. look at no_sibs_grp - this has been imported as numeric
 
-# initial exploration ----------------------------------------------------------
+# 3. initial exploration ----------------------------------------------------------
 
 # Note the number of records in the dataset, how many variables there are, 
 # the type of variables, how many unique values there are per variable, 
