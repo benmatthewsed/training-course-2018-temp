@@ -43,35 +43,8 @@ library(lubridate)
 # read in the exclusions dataset you made on Tuesday again 
 load("")
 
-# errors in finish dates -------------------------------------------------------
 
-# Q3 check whether there are errors in finish dates
-# Error in recording of finish date occurs if the finish dates differ 
-# for episodes have identical start dates 
-# this is not picked up when using the duplicate function 
-# in the indexing and joining session
-# it will be difficult to decide which finish date is correct. There are at least three 
-# options here:
-# 1. move the finish date to the middle of two finish dates (average)
-# 2. delete the records, assuming this is not accurate 
-# 3. randomly pick one record, assuming the difference is small and won't affect
-# the modelling/analysis results
-# let's take option 3 and keep the first record
-
-# an finish date index - for each person and startdate count the number of rows
-exclusions %>% 
-  group_by(synid, startdate) %>% 
-  mutate(finishdate_n = row_number()) %>% 
-  arrange(desc(finishdate_n)) 
-
-# dropping cases that are equal to 1 for finishdate_n
-exclusions %>% 
-  group_by(synid, startdate) %>% 
-  mutate(finishdate_n = row_number()) %>% 
-  arrange(desc(finishdate_n)) %>% 
-  filter(finishdate_n < 2)
-
-# Q2 Check year of exclusion from start date -----------------------------------
+# 2. Check year of exclusion from start date -----------------------------------
 
 # to extract the year from startdate (note that R has helpfully imported this
 # as a date variable for us) we can use the year() function from the lubridate
@@ -99,7 +72,7 @@ exclusions %>%
 exclusions <- exclusions %>% 
   filter(startdate < ymd("2011-03-27"))
 
-# Q6 School holidays should not be counted when report exclusions --------------
+# 3. School holidays should not be counted when report exclusions --------------
 # to start we want to create the month() variable as before, but with month()
 # not year() and again to check the distribution
 
@@ -132,7 +105,7 @@ exclusions %>%
   filter(hols_09 == 1)
 
 
-# Q4 Days of the week --------------------------------------------------------
+# 4. Days of the week --------------------------------------------------------
 # we can use the wday() command from lubridate to find the day of the week,
 # again using mutate() to create a new variable. the label = TRUE option
 # gives us the output as the day name rather than number.
@@ -173,7 +146,7 @@ exclusions <- exclusions %>%
   mutate(finishdate = if_else(startdow == "Sat", finishdate + days(2), finishdate))
 
 
-# calculating duration ---------------------------------------------------------
+# 5. Finding duplicates ---------------------------------------------------------
 
 
 # It's good practice to check what format the variable is though so let's do
@@ -245,6 +218,7 @@ exclusions %>%
   View()
 
 
+# 7. Recoding error ------------------------------------------------------
 
 # let's remove the exclusion which had the shortest duration.
 # it is difficult to know which is correct one. However, it seems that this was
@@ -269,10 +243,7 @@ exclusions %>%
   select(-finishdate) %>% 
   rename(finishdate = finishdate_lead)
 
-
-# count number of exclusions that are due to multiple reasons ------------------
-
-# multiple reasons -------------------------------------------------------------
+# 8. multiple reasons -------------------------------------------------------------
 
 # it'd be helpful to know when there are multiple reasons per exclusion event
 # we can make a flag for this using mutate, and the duplicated() function
@@ -306,6 +277,11 @@ exclusions %>%
   count() %>% 
   ungroup() %>% # we have to ungroup() to divide by the total number of cases
   mutate(proportion = n / sum(n))
+
+
+
+# 9. Delete multiple reasons for exclusion -----------------------------------
+
 
 
 # For now we only want to keep one record per exclusion. First, let's create
@@ -376,13 +352,13 @@ exclusions %>%
             max_duration = max(excl_duration)) 
   
 
-# does exclusion because of multiple reasons have a longer duration? ----------
+# 11. does exclusion because of multiple reasons have a longer duration? ----------
 exclusions %>% 
   group_by(reason_n) %>% 
   filter(!is.na(excl_duration)) %>% 
   summarise(mean_duration = mean(excl_duration))
   
-# calculating the cumulative duration of exclusions ----------------------------
+# 12. calculating the cumulative duration of exclusions ----------------------------
 # we have two options here. If all we want is the sum of exclusion days we can
 # aggregate using group_by and summarise, remembering to remove missing values
 # convert this variable to numeric afterwards (as R will 'helpfully' code this
@@ -406,7 +382,7 @@ exclusions_link <- exclusions %>%
 
 
 
-# save the data ----------------------------------------------------------------
+# 13. save the data ----------------------------------------------------------------
 save(exclusions_link, 
      file = here::here("synthetic-data", "FALSE_DATA_cumulative_exclusions.RData"))
 
