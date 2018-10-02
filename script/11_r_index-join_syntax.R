@@ -26,13 +26,23 @@
 # necessarily the approach that you will take once you are more experienced.
 
 
+
+# Instructions ------------------------------------------------------------
+
+# In the exercise you will be asked to write syntax that performs some indexing 
+# and joining tasks. At the end of the practical you will answer a few questions 
+# and produce files for further exercises. One of main objectives of this exercise
+# is to create a variable on number of exclusions which will be used in risk 
+# factor analysis for becoming NEET.
+
+
 # load the packages ------------------------------------------------------------
 library(tidyverse)
 
-# load data --------------------------------------------------------------------
+# 1. load data --------------------------------------------------------------------
 # read in the dataset you made yesterday, or the .RData file called exclusions day two
 
-load("M:/Working with Admin Data Course/synthetic-data/FALSE_DATA_2017_003-exclusions-day_2.RData")
+exclusions <- read_csv("synthetic-data/FALSE_DATA_2018_exclusions_day1.csv")
 
 # How many variables are there in the file? What types of these variables are? 
 # It is also a good practice to tabulate categorical variables and check the 
@@ -52,9 +62,40 @@ View(exclusions)
 # exclusion event. We need to be aware of this when calculating summary statistics
 # as we might double-count exclusions with multiple reasons!
 
+# 2. Check year of exclusion from start date -----------------------------------
+
+# (NB this is the same process as in the dates and times session)
+
+# to extract the year from startdate (note that R has helpfully imported this
+# as a date variable for us) we can use the year() function from the lubridate
+# package. As we're making a new variable we use mutate() as well.
+
+# if the data had been imported as a different format we could convert to
+# date using lubridate::ymd(), myd(), dmy() etc. depending on the format
+
+exclusions %>% 
+  mutate(startyear = lubridate::year(startdate))
+
+# there shouldn't be any cases after 2011 - let's check this
+exclusions %>% 
+  mutate(startyear = lubridate::year(startdate)) %>% 
+  group_by(startyear) %>% 
+  count()
+
+# Uh-oh! there's post-2011 cases shouldn't be there. Let's drop them and save the
+# result
+
+# NOTE - census day was 27th March 2011. We can use logical operators
+# to filter for any dates after the census date, but you'll need to tell R
+# that our reference date is in date format
+
+exclusions <- exclusions %>% 
+  filter(startdate < lubridate::ymd("2011-03-27"))
+
+
 # Finding errors ---------------------------------------------------------------
 
-# Each excluion should have a unique start and finish date. But it might not!
+# Each exclusion should have a unique start and finish date. But it might not!
 
 # First write syntax for creating spell index and then use them to identify 
 # potential errors in date variables. Create first index by person ID and start 
@@ -95,135 +136,104 @@ exclusions %>%
 exclusions %>% 
   filter(synid == 2993 | synid == 5757)
 
- 
-# This could be due to recording errors and it is usually difficult to know which 
-# finish date is correct without additional information. You can either keep one 
-# record assuming this is the correct one or delete both records assuming both are
-# not trustworthy. However, we have a small sample and also the difference between
-# two finish dates are not very big. You can keep the first record and drop the 
-# second one. Now write syntax to drop the case where two index variables differ. 
+# We're going to resolve some of these problems now.
 
-exclusions <- exclusions %>% 
-  filter(flag_identical == TRUE)
+# 3. convert to wide dataset by exclusion reason --------------------------
 
-# multiple reasons -------------------------------------------------------------
+# first create a variable for reason number for each person, start date and
+# end date
 
-# it'd be helpful to know when there are multiple reasons per exclusion event
-# we can make a flag for this using mutate, and the duplicated() function
-# which will give TRUE if there are duplicate values for synid
+exclusions <- 
+  exclusions %>% 
+  group_by(synid, 
+           startdate, finishdate) %>% 
+  mutate(reason_n = row_number()) %>% 
+  ungroup()
 
 
+# 4. spread to wide -------------------------------------------------------
 
-# flag for multiple reasons
-exclusions <- exclusions %>% 
-  group_by(synid, startdate, finishdate) %>% 
-  mutate(multiple_reasons = duplicated(synid))
+# then use spread() to reshape into a wide format using the reason_n and
+# incidentype variables. This will give one row per exclusion. We need
+# to remove the id_date variables though, as these are not unique for each
+# exclusion
 
-# note that this only flags TRUE from the second of the multiple reasons
-# we can exclude the duplicate reasons by either filtering on
-# multiple reasons == FALSE
-
+exclusions_wide <- 
 exclusions %>% 
-  filter(multiple_reasons == FALSE)
+  select(flag:incidenttype, noprovdays, intaltprov, reason_n) %>% 
+  spread(reason_n, incidenttype)
 
-# or by aggregating the dataset and giving a variable which counts the number 
-# of reasons. Summarise performs the same job as filtering here, by collapsing
-# the dataset into one row per exclusion event, but with a column listing the
-# number of reasons rather than showing whether multiple reasons were present
+# we can rename this variables from `1` (note the backticks `` to reason_1 etc)
 
-exclusions %>% 
-  group_by(flag, startdate, intaltprov, noprovdays, id_date_ind,
-           id_date_ind2, flag_identical) %>% 
-  # we have to group by all these variables otherwise summarise will drop them
-  summarise(reason_n = n()) %>% 
-  arrange(desc(reason_n))
+exclusions_wide <- 
+exclusions_wide %>% 
+  rename(reason_1 = `1`, reason_2 = `2`, reason_3 = `3`)
+  
 
+# 5. checking the transformation ------------------------------------------
 
-# count number of exclusions that are due to multiple reasons ------------------
+# each exclusion episode should be characterised by identical startdate and 
+# finishdate. Create a new variable for each person and startdate that counts
+# the number of finishdates, then see if all people have 1 for this variable
 
-# now we want to count the exclusions attirubtable to multiple reasons
-# we can use our multiple reasons flag from before. First,
-# count the number of cases with each 'level' of the multiple reasons flag
-# (i.e. TRUE/FALSE), then divide each of these two numbers by the total number 
-# of cases
+exclusions_wide %>% 
+  group_by(synid, startdate) %>% 
+  mutate(finishdate_n = row_number()) %>% 
+  filter(finishdate_n > 1)
 
-exclusions %>% 
-  group_by(multiple_reasons) %>% 
-  count() %>% 
-  ungroup() %>% # we have to ungroup() to divide by the total number of cases
-  mutate(proportion = n / sum(n))
+exclusions_wide %>% 
+  filter(synid == 5757)
 
-# calculating the exclusion number ---------------------------------------------
-# as we think about merging this dataset with the school census we'll want
-# to create a variable which lists each person's exclusion number
+# 6. replace reason_2 for the second exclusion record --------------------
 
-# the first thing we need to do is make the exclusions dataset one row per
-# event, not one row per reason
-
-exclusions <- exclusions %>% 
-  filter(multiple_reasons == FALSE)
+# replace the variables of the second exclusion reason for the record 
+# of the person identified above
+# make an assumption that penalty is likely to be longer for multiple reasons
+# by keeping finishdate that gives a longer duration
+# (ignore noprovdays here)
 
 
-# then calculate a variable with the row_number for each person
-exclusions <- exclusions %>% 
+exclusions_wide <- 
+exclusions_wide %>% 
+  arrange(synid, startdate, finishdate) %>% 
+  mutate(reason_2 = if_else(synid == 5757 &
+                              startdate == lubridate::ymd("2008-02-19"),
+                            dplyr::lag(reason_1), reason_2))
+
+
+
+# 7. remove the duplicate record ------------------------------------------
+
+exclusions_wide <- 
+exclusions_wide %>% 
+  filter(synid != 5757 |
+           finishdate != lubridate::ymd("2008-02-20"))
+
+# NB you can check this is successful because the number of cases should
+# decrease by one. 
+
+
+
+# 8. make multi-reason exclusion variable --------------------------------
+
+# any exclusion which has a reason_2 listed must have multiple
+# exclusions, so we can make this variable using if_else and selecting
+# is not missing for reason_2 with !is.na(reason_2)
+
+exclusions_wide <- 
+exclusions_wide %>% 
+  mutate(multi_reason_exclusion = if_else(!is.na(reason_2),
+                                          "Multiple reasons",
+                                          "Single reason"))
+
+
+
+# 9. making multiple exclusions per child variable ------------------------
+
+exclusions_wide <- 
+exclusions_wide %>% 
   group_by(synid) %>% 
-  mutate(excl_number = row_number())
-
-# merging with school census ---------------------------------------------------
-
-# read in school census
-load("M:/Working with Admin Data Course/synthetic-data/FALSE_DATA_2017_003-school_census-day_2.RData")
-
-# remind ourselves what's in the school census
-glimpse(school_census)
-
-# join the two datasets together 
-
-# to comine the datasets we can use the left_join function (see the 
-# data wrangling cheat sheet for a helpful illustration) and list the index
-# variables as by and flag. Left join matches exclusions to children in the census
-# so if there were exclusions which didn't match children these would not be joined
-# Even though flag is the same in both datasets we include it as a linking variable
-# so R doesn't make two copies of it in the linked dataset
-
-linked_school_cen_excl <- left_join(school_census, exclusions, by = c("synid", "flag"))
-
-# don't worry about the warning - it's telling us that the flag variables
-# were of different types in the original two datasets. We don't care about that!
-
-# create a variable showing whether a person has an exclusion ------------------
-
-# we can use mutate with an ifelse statement to make this variable
-# ifelse takes three arguments: 1. the logical condition to evaluate,
-# 2. what to do if TRUE and 3. what to do if FALSE
-# Here our condition is e.g. if the exclusion number is not missing
-# What to do if TRUE is value "Exclusion" and if FALSE "No_exclusion"
-
-linked_school_cen_excl <- linked_school_cen_excl %>% 
-  mutate(excl_flag = ifelse(!is.na(excl_number), "Exclusion", "No_exclusion"))
-
-
-# setting exclusion number to zero for those with no exclusions
-# we can just adapt our code from yesterday on using replace to change
-# the variable excl_number, when excl_number is NA to 0
-
-linked_school_cen_excl %>% 
-  mutate(excl_number = replace(excl_number, is.na(excl_number), 0))
-
-
-# convert from multiple exclusions to single -----------------------------------
-
-# we now want to convert the dataset so that we have one record per child
-
-# one way to do this is for each person to count the number of records per child.
-# we group_by the variables in the school census (flag, synid, 
-# gender, freemeal, prop_abs_grp, examS4_grp) and excl_flag in order to carry them
-# along when we summarise. Save this as a new object
-
-linked_sch_cen_excl_per_id <- linked_school_cen_excl %>% 
-  group_by(flag, synid, gender, freemeal, prop_abs_grp, examS4_grp, excl_flag) %>% 
-  summarise(n_exclusions = sum(excl_flag == "Exclusion")) %>% 
-  ungroup() # it's polite to leave it ungrouped!
+  mutate(exclusion_number = row_number())
 
 # saving the dataset -----------------------------------------------------------
 
