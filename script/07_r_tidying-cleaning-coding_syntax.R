@@ -27,6 +27,22 @@
 # necessarily the approach that you will take once you are more experienced.
 
 
+# Today we will just familiarise ourselves with the datasets, look at the format
+# of the variables, check for levels of missingness and data outliers, do some 
+# simple descriptive analyses, filter and group variables, create any new 
+# variables we might require, label variables and reformat some variables to 
+# make them easier to work with. We will also create the NEET outcome variable.
+
+# Useful tip: always visually inspect the data after executing syntax to make 
+# sure that the observed and expected results are the same. For complex syntax, 
+# it is better to check the results for several different individuals with 
+# variations in characteristics that required the syntax to operate in 
+# different ways.
+
+
+# 0. Getting ready --------------------------------------------------------
+
+
 
 # clearing workspace
 
@@ -35,7 +51,7 @@
 # important information in your code (reproducible) not in the workspace (not
 # reproducible)
 
-# load the packages ------------------------------------------------------------
+# load the packages -
 # we're going to use the tidyverse package, so we need to load this
 library(tidyverse)
 
@@ -75,6 +91,15 @@ census %>%
 # 3. relabel the factor levels for ecop1
 # 4. look at no_sibs_grp - this has been imported as numeric
 
+# the skimr package has the helpful skim() function to summarise data.
+# When a package # has been installed you can use a function from a package 
+# even when it hasn't been
+# loaded by calling the package_name::function_name like so
+
+skimr::skim(census)
+
+
+
 # 3. initial exploration ----------------------------------------------------------
 
 # Note the number of records in the dataset, how many variables there are, 
@@ -90,7 +115,7 @@ census %>%
 # from 2001 (we assume that birth year is accurate because the SLS sampling
 # frame is based on accurate recording of DOB)
 
-# mutate -----------------------------------------------------------------------
+# 4. making new variables - mutate -----------------------------------------------------------------------
 
 # We can create a new variable using mutate(). This is an unbelieveably helpful
 # command that we're going to use A LOT. mutate() takes the name of the
@@ -145,7 +170,7 @@ census %>%
 # clear in your documentation what you've done and why!
 
 
-# missing data -----------------------------------------------------------------
+# 5. missing data -----------------------------------------------------------------
 
 # Because we know that for agep0 -999 is missing we can happily recode this
 # to be missing in a way that R understands.
@@ -198,7 +223,7 @@ census %>%
 # from library(VIM). It produces an awesome plot of missingness!
 
 
-# changing variable type -------------------------------------------------------
+# 6. changing variable type -------------------------------------------------------
 
 # Sometimes we want to change the way that R has coded a variable. This is
 # because default options for different variable types differ. For example,
@@ -224,7 +249,7 @@ census %>%
                               "12" = "Dec"))
 
 
-# aggregation ------------------------------------------------------------------
+# 7. aggregation ------------------------------------------------------------------
 
 # Before we move on to some more tidying, it's worth having a look at aggregation
 # and grouping. These summaries will be invaluable when working out what's happened
@@ -245,7 +270,7 @@ census %>%
 # count(), and summary functions in general, are most helpful when used to examine
 # different groups...
 
-# group_by ---------------------------------------------------------------------
+# group_by 
 
 # Say we want to find the mean age for boys and girls. We can add a call to group_by
 # to perform the next action for each group in sex0 and then use the same 
@@ -311,7 +336,7 @@ census %>%
 
 
 
-# changing factor levels -------------------------------------------------------
+# 8. changing factor levels -------------------------------------------------------
 
 # we can recode multiple variables levels this way. Let's recode the ethnic group
 # variable to make it a bit simpler, by tunring the different White codes into "White",
@@ -365,7 +390,7 @@ census %>%
   count(ethnic_grp)
 
 
-# factor reorder ---------------------------------------------------------------
+# 9. factor reorder ---------------------------------------------------------------
 # one potentially helpful feature of factors in R is that they have an order.
 # This isn't so much help though if the order is messed up!
 # let's take a look at the help1 variable:
@@ -393,10 +418,10 @@ census %>%
 # note that the levels we didn't specify - No code required and NA - end up at
 # the end of the factor
 
-# recoding ademh0, crh0 and sex0 -----------------------------------------------
+# 10. recoding ademh0, crh0 and sex0 -----------------------------------------------
 # We're going to use these skills to tidy up some other factor levels now.
 
-# 8.	recode ademh0 as there are low numbers of households with 3 and 4 employed
+# recode ademh0 as there are low numbers of households with 3 and 4 employed
 #adults in household. Create the following groups: 0, 1, 2, 3+ employed adults, 
 #and recode missing group to . Label the new variable and add value labels.
 
@@ -412,7 +437,7 @@ census <- census %>%
                                "3+" = "4",
                                NULL = "Missing"))
 
-# 9.	recode crsh0 as there are low numbers of households with multiple numbers 
+# recode crsh0 as there are low numbers of households with multiple numbers 
 # of carers. Dichotimise to 0 carers v 1 or more carers, and recode missing group 
 # to NA Label the new variable and add value labels.
 
@@ -428,7 +453,7 @@ census <- census %>%
                                NULL = "Missing"))
 
 
-# 11.	sex0 has missing data category. Recode to a dichotomous variable and and 
+# sex0 has missing data category. Recode to a dichotomous variable and and 
 # recode the missing group to NA Label the new variable and add value labels.
 
 # this is a job for fct_recode not factor collapse, as we only want to change
@@ -441,7 +466,7 @@ census %>%
   count(sex0)
 
 
-# deriving the NEET variable ---------------------------------------------------
+# 11. deriving the NEET variable ---------------------------------------------------
 # Some of the labels are a bit confusing. Assume that 8:(7)Economically active 
 # but unemployed = NEET. Economically inactive codes that are not students should 
 # also be coded as NEET ie 16, 18-20 but not 17: (16) Economically inactive: student
@@ -477,7 +502,7 @@ census <- census %>%
 # the rest of the week
 
 
-# exploring the school census --------------------------------------------------
+# 12. exploring the school census --------------------------------------------------
 school_census <- read_csv("M:/Working with Admin Data Course/synthetic-data/FALSE_DATA_2017_003_school_census_ver02_v3.csv")
 
 # glimpse will give us high-level information about all the variables
@@ -505,7 +530,7 @@ school_census <- school_census %>%
 
 
 
-# recoding type of variable in exclusions --------------------------------------
+# 13. recoding type of variable in exclusions --------------------------------------
 load("M:/Working with Admin Data Course/synthetic-data/false_data_2017_003_exclusions_ver02.RData")
 
 # note that this is a different file format from before! and we didn't assign
@@ -535,8 +560,12 @@ exclusions <- as.tibble(exclusions)
 # glimpse will give us high-level information about all the variables
 glimpse(exclusions)
 
-# summary takes a more statistical approach
+# ... summary ...
 summary(exclusions)
+
+# ... and skim
+
+skimr::skim(exclusions)
 
 # noprovdays has been imported as a character vector. Let's change that using
 # mutate and as.numeric
@@ -570,56 +599,57 @@ save(census, file = "FALSE_DATA_2017_003-census-day_2.RData")
 save(school_census, file = "FALSE_DATA_2017_003-school_census-day_2.RData")
 save(exclusions, file = "FALSE_DATA_2017_003-exclusions-day_2.RData")
 
-# ADVANCED - spread and gather -------------------------------------------------
+
+# ADVANCED 1. if and else -----------------------------------
+
+# ifelse statements are handy ways to perform actions when certain conditions are met
+# say we want to make a new age variable where everyone born in 1994 is classed
+# as young and everyone else is not young.
+# we can use the syntax ifelse(condition, action if true, action if false) with
+# mutate
+
+census %>% 
+  mutate(age_grp = ifelse(slsdobyr == 1994, "young", "not young"))
+
+# the case_when() function allows us to string together different conditions
+# here we can designate those born in 1994 as young, those born in 1991 as old
+# and everyone else as neither young nor old. Note the tilde (~) assignment here!
+
+census %>% 
+  mutate(age_grp = case_when(
+    slsdobyr == 1994 ~ "young",
+    slsdobyr == 1991 ~ "old",
+    TRUE ~ "neither young nor old")) %>%  glimpse
+
+# use ifelse or case_when to construct a variable for whether council area
+# is Edinburgh or Glasgow or rest of Scotland
 
 
-# create a wide dataset.
-# first calculate a reason number for each person, startdate and finishdate
-# then use spread() to turn the dataset wide with the columns being the values
-# of this reason number variable and the observations being the incidenttype
 
-# save this as another object (suitably named)
+# ADVANCED 2. arranging by order -----------------------------------------------------------
 
-excl_wide <- syndati %>% 
-  group_by(synid, startdate, finishdate) %>% 
-  mutate(reason_n = row_number()) %>%
-  spread(reason_n, incidenttype) %>% 
-  rename(reason_1 = `1`,
-         reason_2 = `2`,
-         reason_3 = `3`)
+# it's handy to arrange things by vraiable order as we work with the dataset
+# and later on when we visualize. Let's try some examples.
 
-glimpse(excl_wide)
+# which is the earliest exlcusion in the dataset?
+# we can find out by ordering the startdate (this will print the result to the
+# console)
 
-# now convert to long with gather, creating new variables called
-# "reason_n" and "incident_type", gathering columns 7 to 9
+exclusions %>% 
+  arrange(startdate)
+
+# how about the latest? we can wrap a call to desc() - short for descending -
+# in the call to arrange
+exclusions %>% 
+  arrange(desc(startdate))
 
 
-exclusions <- excl_wide %>% 
-  gather("reason_n", "incident_type", 7:9)
-
-glimpse(exclusions)
-
-# wait what? the number of observations has tripled!
-# have a look at the dataset and see what that's happened
-
-View(exclusions)
-
-# hint - you might have to scroll down a wee bit
-
-# converting wide to long has added lots of NAs where there were extra reasons
-# we can change this behaviour in the call to gather by adding na.rm = TRUE
-
-excl_wide %>% 
-  gather("reason_n", "incident_type", 7:9, na.rm = TRUE)
-
-# or we can just filter out those which aren't missing by combining the operators
-# ! and is.na (which checks whether a value is NA)
-
-exclusions <- exclusions %>% 
-  filter(!is.na(incident_type))
+# now find our what the longest exclusion was
+exclusions %>% 
+  arrange(desc(noprovdays))
 
 
-# working with strings ---------------------------------------------------------
+# ADVANCED 3. working with strings ---------------------------------------------------------
 
 # for this exercise we're going to introduce a problem in our dataset which we'll
 # then fix. Run the code below - what is it doing?
@@ -665,7 +695,7 @@ census <- census %>%
   mutate(councilarea = recode(councilarea,
                               "Clackmananshire" = "Clackmannanshire"))
 
-# separate and unite -----------------------------------------------------------``
+# sADVANCED 2. separate and unite -----------------------------------------------------------``
 
 # hmmm, the reason_1 variable we created above would be more helpful if it was an integer.
 # one way to do this is to separate this vector at the "_" separator. The separate
@@ -731,30 +761,8 @@ exclusions2 %>%
 
 rm(exclusions2)
 
-# arranging by order -----------------------------------------------------------
 
-# it's handy to arrange things by vraiable order as we work with the dataset
-# and later on when we visualize. Let's try some examples.
-
-# which is the earliest exlcusion in the dataset?
-# we can find out by ordering the startdate (this will print the result to the
-# console)
-
-exclusions %>% 
-  arrange(startdate)
-
-# how about the latest? we can wrap a call to desc() - short for descending -
-# in the call to arrange
-exclusions %>% 
-  arrange(desc(startdate))
-
-
-# now find our what the longest exclusion was
-exclusions %>% 
-  arrange(desc(noprovdays))
-
-
-# EVEN MORE ADVANCED EXERCISES - unite -----------------------------------------
+# ADVANCED 4. unite -----------------------------------------
 
 # We had some practice with separate and unite before, but we're going
 # to look at this in some more detail now.
@@ -806,30 +814,6 @@ census %>%
 # we can see more about using stringr for regular expression here
 # http://www2.stat.duke.edu/~cr173/Sta523_Fa15/regex.html
 
-
-# advanced topics - working with if and else -----------------------------------
-
-# ifelse statements are handy ways to perform actions when certain conditions are met
-# say we want to make a new age variable where everyone born in 1994 is classed
-# as young and everyone else is not young.
-# we can use the syntax ifelse(condition, action if true, action if false) with
-# mutate
-
-census %>% 
-  mutate(age_grp = ifelse(slsdobyr == 1994, "young", "not young"))
-
-# the case_when() function allows us to string together different conditions
-# here we can designate those born in 1994 as young, those born in 1991 as old
-# and everyone else as neither young nor old. Note the tilde (~) assignment here!
-
-census %>% 
-  mutate(age_grp = case_when(
-    slsdobyr == 1994 ~ "young",
-    slsdobyr == 1991 ~ "old",
-    TRUE ~ "neither young nor old")) %>%  glimpse
-
-# use ifelse or case_when to construct a variable for whether council area
-# is Edinburgh or Glasgow or rest of Scotland
 
 
 # checking package versions ----------------------------------------------------
